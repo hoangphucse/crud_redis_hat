@@ -1,6 +1,7 @@
 package comjava.repository;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.ListOperations;
@@ -23,6 +24,7 @@ public class EmployeeRepository {
 
 		this.hashOperations = redisTemplate.opsForHash();
 		this.listOperations = redisTemplate.opsForList();
+		this.setOperations = redisTemplate.opsForSet();
 		this.redisTemplate = redisTemplate;
 
 	}
@@ -30,14 +32,16 @@ public class EmployeeRepository {
 	public void saveEmployee(Employee employee) {
 
 		// hashOperations.put("EMPLOYEE", employee.getId(), employee);
-		listOperations.leftPush("EMPLOYEE", employee);
+		//listOperations.leftPush("EMPLOYEE", employee);
+		setOperations.add("EMPLOYEE", employee);
 		
 	}
 
-	public List<Employee> findAll() {
+	public Set<Employee> findAll() {
 
 //        return hashOperations.values("EMPLOYEE");
-		return listOperations.range("EMPLOYEE", 0, listOperations.size("EMPLOYEE"));
+//		return listOperations.range("EMPLOYEE", 0, listOperations.size("EMPLOYEE"));
+		return setOperations.members("EMPLOYEE");
 	}
 
 	public Employee findById(Integer id) {
@@ -45,12 +49,19 @@ public class EmployeeRepository {
 	
 		//return (Employee) hashOperations.get("EMPLOYEE", id);
 		
-		List<Employee> employees = listOperations.range("EMPLOYEE", 0, listOperations.size("EMPLOYEE"));
+//		List<Employee> employees = listOperations.range("EMPLOYEE", 0, listOperations.size("EMPLOYEE"));
+//		for (Employee employee : employees) {
+//			if(employee.getId() == id)
+//				return employee;
+//		}
+//		return null;
+		Set<Employee> employees = this.findAll();
 		for (Employee employee : employees) {
 			if(employee.getId() == id)
 				return employee;
 		}
 		return null;
+		
 	}
 
 	public void update(Employee employee) {
@@ -59,6 +70,9 @@ public class EmployeeRepository {
 
 	public void delete(Integer id) {
 		// hashOperations.delete("EMPLOYEE", id);
-		listOperations.rightPopAndLeftPush("EMPLOYEE", id);
+		//listOperations.rightPopAndLeftPush("EMPLOYEE", id);
+		Employee employee = this.findById(id);
+		setOperations.remove("EMPLOYEE", employee);
+		
 	}
 }
